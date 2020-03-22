@@ -1,7 +1,10 @@
 package main
 
-import "os/exec"
-import "fmt"
+import (
+	"fmt"
+	"os/exec"
+	"runtime"
+)
 
 func main() {
 	var output1, _ = exec.Command("ls").Output()
@@ -15,8 +18,11 @@ func main() {
 	fmt.Println("Git Name:", string(output3))
 
 	if runtime.GOOS == "windows" {
-		output, err = exec.Command("cmd", "/C", "git config user.name").Output()
+		output, _ := exec.Command("cmd", "/C", "git config user.name").Output()
+		fmt.Println("Git Name:", string(output))
 	} else {
-		output, err = exec.Command("bash", "-c", "git config user.name")
+		output, _ := exec.Command("git", "config", "user.name").Output()
+		fmt.Println("Git Name:", string(output))
 	}
+
 }
