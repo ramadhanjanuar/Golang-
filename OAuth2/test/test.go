@@ -28,33 +28,66 @@ var ISSUER = "https://auth.99group.co"
 
 func main() {
 	manager := manage.NewDefaultManager()
-	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
-
+	// token memory store
 	manager.MustTokenStorage(store.NewMemoryTokenStore())
+
+	//jest
 	manager.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512))
 
+	// client memory store
 	clientStore := store.NewClientStore()
+	clientStore.Set("000000", &models.Client{
+		ID:     "000000",
+		Secret: "999999",
+		Domain: "http://localhost",
+	})
 	manager.MapClientStorage(clientStore)
 
-	srv := server.NewDefaultServer(manager)
+	srv := server.NewServer(server.NewConfig(), manager)
 	srv.SetAllowGetAccessRequest(true)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
-	manager.SetRefreshTokenCfg(manage.DefaultRefreshTokenCfg)
 
 	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
 		log.Println("Internal Error:", err.Error())
 		return
 	})
 
-	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		HandlerLogin(w, r, clientStore)
+	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+		fmt.Println("kesini dulu gak")
+		claims := &jwt.StandardClaims{
+			Subject:   "uuid of the user",
+			Audience:  "client id",
+			Issuer:    ISSUER,
+			ExpiresAt: EXPIRES_AT,
+			NotBefore: TIME_NOW,
+			IssuedAt:  TIME_NOW,
+		}
+
+		jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+		return
 	})
 
 	srv.SetResponseErrorHandler(func(re *errors.Response) {
 		log.Println("Response Error:", re.Error.Error())
 	})
 
+	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
+		err := srv.HandleAuthorizeRequest(w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	})
+
 	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
+		claims := jwt.StandardClaims{
+			Subject:   "uuid of the user",
+			Audience:  "000000",
+			Issuer:    ISSUER,
+			ExpiresAt: EXPIRES_AT,
+			NotBefore: TIME_NOW,
+			IssuedAt:  TIME_NOW,
+		}
+		jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 		srv.HandleTokenRequest(w, r)
 	})
 
@@ -78,8 +111,8 @@ func HandlerLogin(w http.ResponseWriter, r *http.Request, clientStore *store.Cli
 	clientID := uuid.New().String()[:8]
 	clientSecret := uuid.New().String()[:8]
 	err := clientStore.Set(clientID, &models.Client{
-		ID:     clientID,
-		Secret: clientSecret,
+		ID:     "000000",
+		Secret: "999999",
 	})
 
 	claims := jwt.StandardClaims{
