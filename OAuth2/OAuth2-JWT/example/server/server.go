@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/go-session/session"
 	"gopkg.in/oauth2.v3/errors"
 	"gopkg.in/oauth2.v3/generates"
@@ -20,14 +20,13 @@ import (
 
 func main() {
 	manager := manage.NewDefaultManager()
-
-	manager.SetAuthorizeCodeTokenCfg(AuthorizeCodeTokenCfg)
+	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
 
 	// token store
-	manager.MustTokenStorage(store.NewFileTokenStore(TokenStore))
+	manager.MustTokenStorage(store.NewMemoryTokenStore())
 
 	// generate jwt access token
-	manager.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte(JwtKey), jwt.SigningMethodHS512))
+	manager.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodRS256))
 
 	clientStore := store.NewClientStore()
 	clientStore.Set("222222", &models.Client{
@@ -38,7 +37,7 @@ func main() {
 	manager.MapClientStorage(clientStore)
 
 	srv := server.NewServer(server.NewConfig(), manager)
-
+	srv.SetClientInfoHandler(server.ClientFormHandler)
 	srv.SetPasswordAuthorizationHandler(func(username, password string) (userID string, err error) {
 		if username == "test" && password == "test" {
 			userID = "test"
