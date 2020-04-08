@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 
 	"../29.protobuf/model"
 	"github.com/golang/protobuf/jsonpb"
@@ -58,6 +59,17 @@ func main() {
 	fmt.Printf("# ==== As JSON String\n       %v \n", jsonString)
 	fmt.Printf("# ==== As JSON String\n       %v \n", userListJSON)
 	fmt.Printf("# ==== As JSON String\n       %v \n", garageListByUserJSON)
+
+	buf2 := strings.NewReader(jsonString)
+	protoObject := new(model.GarageList)
+
+	err2 := (&jsonpb.Unmarshaler{}).Unmarshal(buf2, protoObject)
+	if err2 != nil {
+		fmt.Println(err2.Error())
+		os.Exit(0)
+	}
+
+	fmt.Printf("# ==== As String\n       %v \n", protoObject.String())
 }
 
 func objProtoToJSON(obj proto.Message) string {
