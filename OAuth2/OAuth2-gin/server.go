@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -47,7 +48,8 @@ func main() {
 
 	auth := g.Group("/oauth2")
 	{
-		auth.GET("/token", ginserver.HandleTokenRequest)
+		auth.POST("/token", ginserver.HandleTokenRequest)
+		auth.POST("/authorize", ginserver.AuthorizeHandler)
 	}
 
 	api := g.Group("/api")
@@ -64,6 +66,11 @@ func main() {
 	}
 
 	g.Run(":9096")
+}
+
+// AuthorizeHandler for authorization
+func AuthorizeHandler(c *gin.Context) {
+	fmt.Println(c.GetHeader("Authorization"))
 }
 
 // AuthHandler handler for authentication

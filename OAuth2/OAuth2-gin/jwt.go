@@ -61,6 +61,7 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 		v, err := jwt.ParseECPrivateKeyFromPEM(a.SignedKey)
 		if err != nil {
 			return "", "", err
+
 		}
 		key = v
 	} else if a.isRsOrPS() {
